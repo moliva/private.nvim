@@ -1,33 +1,39 @@
--- local dump = require('kmobic33/utils').dump
 local Job = require 'plenary.job'
 
-print "CRYPTIIIC"
-
-M = {}
-
-function M.setup(opts)
-  -- setup function is a convention for plugins in lua neovim
+function string:ends_with(ending)
+  return ending == "" or self:sub(- #ending) == ending
 end
+
+local M = {}
 
 local function read_pre_hook()
   local current_buf = vim.api.nvim_get_current_buf()
   local filename = vim.api.nvim_buf_get_name(current_buf)
 
-  if ends_with(filename, ".cpt") then
-    local decrypted_text = decrypt_file(filename, 0)
-    if decrypted_text == nil then
+  if filename:ends_with(".cpt") then
+    local decrypted_text, success = M.decrypt(filename)
+    if not success then
+      print("Wrong password!")
       return
     end
+
     vim.api.nvim_buf_set_lines(current_buf, 0, -1, false, decrypted_text)
-  else
-    -- if vim.env.ccrypt_pass == nil then
-    --   L.input_ccrypt_pass()
-    -- end
   end
+end
+
+function M.setup(opts)
+  local cryptic_group = vim.api.nvim_create_augroup("Cryptic", { clear = true })
+
+  vim.api.nvim_create_autocmd("BufReadPost", {
+    pattern = "*",
+    callback = read_pre_hook,
+    group = cryptic_group,
+  })
 end
 
 --- Encrypts the current file path using the selected cryptographic algorithm.
 --- @param path string
+--- @return table, boolean
 function M.encrypt(path)
   local cwd = vim.fn.getcwd()
   local password = vim.fn.input('Password > ')
@@ -35,12 +41,11 @@ function M.encrypt(path)
   Job:new({
     -- command = 'ccrypt -e -K ' .. password .. ' < ' .. path .. ' > ./' .. path .. '.cpt',
     command = 'ccrypt',
-    args = { '-e', '-K', password, '<', path, '>', './' .. path .. '.cpt' },
+    args = { '-e', '-K', password, path },
     cwd = cwd,
     -- env = { ['a'] = 'b' },
     on_exit = function(j, return_val)
       print(return_val)
-      -- print(dump(j:result()))
     end,
   }):sync() -- or start()
 end
@@ -51,27 +56,17 @@ function M.decrypt(path)
   local cwd = vim.fn.getcwd()
   local password = vim.fn.input('Password > ')
 
-  Job:new({
+  local result, code = Job:new({
     command = 'ccrypt',
-    args = { '-d', '-K', password, path },
+    args = { '-dc', '-K', password, path },
     cwd = cwd,
-    -- env = { ['a'] = 'b' },
-    on_exit = function(j, return_val)
-      print(return_val)
-      -- print(dump(j:result()))
-    end,
   }):sync() -- or start()
-end
 
-function M.sayhi()
-  print("HIIIIIIIIIIIIIIIIIIIIIIIIIII")
+  if code == 0 then
+    print(vim.inspect(result))
+  end
+
+  return result, code == 0
 end
 
 return M
-
-
-
-
---:lua require('kmobic33/cryptic').encrypt('holis.txt')
---:lua require('kmobic33/cryptic').decrypt('holis.txt.cpt')
-
