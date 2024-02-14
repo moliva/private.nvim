@@ -40,7 +40,7 @@ local function read_hook()
   local current_buf = vim.api.nvim_get_current_buf()
   local filename = vim.api.nvim_buf_get_name(current_buf)
 
-  if filename:ends_with(".cpt") then
+  if filename:ends_with(ENCRYPTION_SUFFIX) then
     local decrypted_text, success = M.decrypt(filename, { persist_changes = false })
     if not success then
       print("Wrong password!")
