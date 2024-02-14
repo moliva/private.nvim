@@ -96,23 +96,39 @@ local function write_hook()
 end
 
 --- @class SetupOptions
+--- @field encryption_strategy string Defaults to `ccrypt`
+--- @field setup_bindings boolean Defaults to `true`
+
+--- @name SetupOptions
+local default_opts = {
+  encryption_strategy = 'ccrypt',
+  setup_bindings = true,
+}
 
 --- Sets up the current plugin with the given opts.
 --- @param opts SetupOptions
 function M.setup(opts)
-  local private_group = vim.api.nvim_create_augroup("private.nvim", { clear = true })
+  opts = vim.tbl_extend("force", default_opts, opts)
 
-  vim.api.nvim_create_autocmd("BufReadPost", {
-    pattern = "*.cpt",
-    callback = read_hook,
-    group = private_group,
-  })
+  if opts.encryption_strategy ~= 'ccrypt' then
+    print("encryption strategy '" .. opts.encryption_strategy .. "' not yet supported, using 'ccrypt' instead!")
+  end
 
-  vim.api.nvim_create_autocmd("BufWritePost", {
-    pattern = "*.cpt",
-    callback = write_hook,
-    group = private_group,
-  })
+  if opts.setup_bindings then
+    local private_group = vim.api.nvim_create_augroup("private.nvim", { clear = true })
+
+    vim.api.nvim_create_autocmd("BufReadPost", {
+      pattern = "*.cpt",
+      callback = read_hook,
+      group = private_group,
+    })
+
+    vim.api.nvim_create_autocmd("BufWritePost", {
+      pattern = "*.cpt",
+      callback = write_hook,
+      group = private_group,
+    })
+  end
 end
 
 --- Encrypts the current file path using the selected cryptographic algorithm.
