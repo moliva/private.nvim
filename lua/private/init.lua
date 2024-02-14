@@ -9,7 +9,9 @@ end
 
 local M = {}
 
-local function read_pre_hook()
+M.cache = {}
+
+local function read_hook()
   local current_buf = vim.api.nvim_get_current_buf()
   local filename = vim.api.nvim_buf_get_name(current_buf)
 
@@ -30,7 +32,27 @@ end
 --- @return table, boolean result Table with the result of the job and boolean representing whether the operation was a success or not
 local function encrypt(path, suffix)
   local cwd = vim.fn.getcwd()
-  local password = vim.fn.input('Password > ')
+
+  local encryption_suffix = ".cpt"
+
+  local path_unsuffixed
+  if suffix == "" then
+    path_unsuffixed = path:sub(1, - #encryption_suffix - 1)
+  elseif suffix == ".cpt" then
+    path_unsuffixed = path
+  end
+  if path:sub(1, 1) ~= "/" then
+    path_unsuffixed = cwd .. "/" .. path_unsuffixed
+  end
+
+  local cached_password = M.cache[path_unsuffixed]
+
+  local password
+  if cached_password ~= nil then
+    password = cached_password
+  else
+    password = vim.fn.input('Password > ')
+  end
 
   local result, code = Job:new({
     command = 'ccrypt',
@@ -38,10 +60,16 @@ local function encrypt(path, suffix)
     cwd = cwd,
   }):sync()
 
-  return result, code == 0
+  local success = code == 0
+
+  if success then
+    M.cache[path_unsuffixed] = password
+  end
+
+  return result, success
 end
 
-local function write_post_hook()
+local function write_hook()
   local current_buf = vim.api.nvim_get_current_buf()
   local filename_path = vim.api.nvim_buf_get_name(current_buf)
 
@@ -58,18 +86,18 @@ end
 --- Sets up the current plugin with the given opts.
 --- @param opts table
 function M.setup(opts)
-  local cryptic_group = vim.api.nvim_create_augroup("Cryptic", { clear = true })
+  local private_group = vim.api.nvim_create_augroup("private.nvim", { clear = true })
 
   vim.api.nvim_create_autocmd("BufReadPost", {
     pattern = "*.cpt",
-    callback = read_pre_hook,
-    group = cryptic_group,
+    callback = read_hook,
+    group = private_group,
   })
 
   vim.api.nvim_create_autocmd("BufWritePost", {
     pattern = "*.cpt",
-    callback = write_post_hook,
-    group = cryptic_group,
+    callback = write_hook,
+    group = private_group,
   })
 end
 
@@ -97,7 +125,21 @@ function M.decrypt(path, persist_changes)
   persist_changes = persist_changes or false
 
   local cwd = vim.fn.getcwd()
-  local password = vim.fn.input('Password > ')
+
+  local suffix = ".cpt"
+  local path_unsuffixed = path:sub(1, - #suffix - 1)
+  if path:sub(1, 1) ~= "/" then
+    path_unsuffixed = cwd .. "/" .. path_unsuffixed
+  end
+
+  local cached_password = M.cache[path_unsuffixed]
+
+  local password
+  if cached_password ~= nil then
+    password = cached_password
+  else
+    password = vim.fn.input('Password > ')
+  end
 
   local args = { '-d', '-K', password, path }
   if not persist_changes then
@@ -111,7 +153,13 @@ function M.decrypt(path, persist_changes)
     cwd = cwd,
   }):sync()
 
-  return result, code == 0
+  local success = code == 0
+
+  if success then
+    M.cache[path_unsuffixed] = password
+  end
+
+  return result, success
 end
 
 return M
