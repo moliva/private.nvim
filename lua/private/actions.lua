@@ -39,7 +39,7 @@ function M.decrypt_current_file()
   local current_buf = vim.api.nvim_get_current_buf()
   local path = vim.api.nvim_buf_get_name(current_buf)
 
-  local result = require('private').decrypt(path, true)
+  local result = require('private').decrypt(path, { persist_changes = true })
 
   if not result then
     print("error while decrypting file '" .. path "'")
@@ -57,7 +57,7 @@ function M.decrypt()
     return false
   end
 
-  local result = require('private').decrypt(path, true)
+  local result = require('private').decrypt(path, { persist_changes = true })
 
   if not result then
     print("error while decrypting file '" .. path "'")
