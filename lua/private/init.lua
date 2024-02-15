@@ -11,14 +11,14 @@ end
 
 local M = {}
 
-M.cache = {}
+local cache = {}
 
 --- Execute a given closure with the password for the given path
 ---@param path string Path of the file to be encrypted/decrypted
 ---@param exec function function(password: string): table, boolean
 ---@return table result, boolean success Table and boolean value
 local function with_password(path, exec)
-  local cached_password = M.cache[path]
+  local cached_password = cache[path]
 
   local password
   if cached_password ~= nil then
@@ -30,7 +30,7 @@ local function with_password(path, exec)
   local result, success = exec(password)
 
   if success then
-    M.cache[path] = password
+    cache[path] = password
   end
 
   return result, success
@@ -108,6 +108,7 @@ local default_opts = {
 --- Sets up the current plugin with the given opts.
 --- @param opts SetupOptions
 function M.setup(opts)
+  opts = opts or {}
   opts = vim.tbl_extend("force", default_opts, opts)
 
   if opts.encryption_strategy ~= 'ccrypt' then
