@@ -1,9 +1,9 @@
-require('private.string') -- loads the string:ends_with function
+require('private.string') -- loads the string:ends_with and string:get_file_extension functions
 
 local ccrypt = require('private.strategies.ccrypt')
 
 -- TODO - document strategy module interfaces - moliva - 2024/02/21
-local strategies = {
+local STRATEGIES = {
   cpt = ccrypt,
   -- b64 = base64,
   b64 = 1,
@@ -16,7 +16,7 @@ local function read_hook()
   local filename = vim.api.nvim_buf_get_name(current_buf)
 
   local file_extension = filename:get_file_extension()
-  local strategy = strategies[file_extension]
+  local strategy = STRATEGIES[file_extension]
 
   if strategy then
     local decrypted_text, success = strategy.decrypt(filename, { persist_changes = false })
@@ -37,7 +37,7 @@ local function write_hook()
   local buf_text_before_encrypt = vim.api.nvim_buf_get_lines(current_buf, 0, -1, false)
 
   local file_extension = filename_path:get_file_extension()
-  local strategy = strategies[file_extension]
+  local strategy = STRATEGIES[file_extension]
 
   local success = strategy.encrypt(filename_path, { in_place = true, force = true })
 
@@ -63,7 +63,6 @@ local default_opts = {
 function M.setup(opts)
   opts = opts or {}
   opts = vim.tbl_extend("force", default_opts, opts)
-  -- print(vim.inspect(opts))
 
   if opts.encryption_strategy ~= 'ccrypt' then
     print("encryption strategy '" .. opts.encryption_strategy .. "' not yet supported, using 'ccrypt' instead!")
@@ -71,17 +70,18 @@ function M.setup(opts)
 
   if opts.setup_bindings then
     local private_group = vim.api.nvim_create_augroup("private.nvim", { clear = true })
+    local all_patterns = vim.tbl_map(function(extension) return "*." .. extension end, vim.tbl_keys(STRATEGIES))
 
     vim.api.nvim_create_autocmd("BufReadPost", {
       -- TODO - extend pattern to all strategies - moliva - 2024/02/21
-      pattern = "*.cpt",
+      pattern = all_patterns,
       callback = read_hook,
       group = private_group,
     })
 
     vim.api.nvim_create_autocmd("BufWritePost", {
       -- TODO - extend pattern to all strategies - moliva - 2024/02/21
-      pattern = "*.cpt",
+      pattern = all_patterns,
       callback = write_hook,
       group = private_group,
     })
@@ -98,7 +98,7 @@ end
 --- @param opts EncryptionOptions Options to be passed for encryption
 --- @return boolean result Representing whether the operation was a success or not
 function M.encrypt(path, opts)
-  return strategies.cpt.encrypt(path, opts)
+  return STRATEGIES.cpt.encrypt(path, opts)
 end
 
 --- @class DecryptionOptions
@@ -111,7 +111,7 @@ end
 --- @return table, boolean Table with the result of the job and boolean representing whether the operation was a success or not
 function M.decrypt(path, opts)
   -- TODO - try to detect encryption used based on metadta/extension - moliva - 2024/02/16
-  return strategies.cpt.decrypt(path, opts)
+  return STRATEGIES.cpt.decrypt(path, opts)
 end
 
 return M
