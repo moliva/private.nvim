@@ -13,11 +13,12 @@ local M = {}
 function M.encrypt(path, opts)
   local suffix = ENCRYPTION_SUFFIX
 
+    -- if the encryption is in place, we need to create a swap file to the output (original) one, since base64 doesn't work properly in this cases
   if opts.in_place then
     suffix = ".swp" -- temporary swap file
   end
 
-  local suffixed_path = path .. ENCRYPTION_SUFFIX
+  local suffixed_path = path .. suffix
 
   local cwd = vim.fn.getcwd()
 
