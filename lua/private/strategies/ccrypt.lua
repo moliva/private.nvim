@@ -1,6 +1,6 @@
 local Job = require('plenary.job')
 
-require('private.string') -- loads the string:ends_with function
+require('private.string') -- loads the string:ends_with and string:get_file_extension functions
 local with_password = require('private.cache').with_password
 
 local ENCRYPTION_SUFFIX = ".cpt"
@@ -44,11 +44,6 @@ local M = {}
 --- @return boolean result Representing whether the operation was a success or not
 function M.encrypt(path, opts)
   local suffix = ENCRYPTION_SUFFIX
-
-  if path:ends_with(suffix) and not opts.force then
-    print("path '" .. path "' is already encrypted, no operation will be applied")
-    return false
-  end
 
   if opts.in_place then
     suffix = ""

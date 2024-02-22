@@ -1,12 +1,12 @@
 require('private.string') -- loads the string:ends_with and string:get_file_extension functions
 
 local ccrypt = require('private.strategies.ccrypt')
+local base64 = require('private.strategies.base64')
 
 -- TODO - document strategy module interfaces - moliva - 2024/02/21
 local STRATEGIES = {
   cpt = ccrypt,
-  -- b64 = base64,
-  b64 = 1,
+  b64 = base64,
 }
 
 local M = {}
@@ -19,7 +19,7 @@ local function read_hook()
   local strategy = STRATEGIES[file_extension]
 
   if strategy then
-    local decrypted_text, success = strategy.decrypt(filename, { persist_changes = false })
+    local decrypted_text, success = M.decrypt(filename, { strategy = strategy, persist_changes = false })
     if not success then
       print("Wrong password!")
       return
@@ -39,7 +39,7 @@ local function write_hook()
   local file_extension = filename_path:get_file_extension()
   local strategy = STRATEGIES[file_extension]
 
-  local success = strategy.encrypt(filename_path, { in_place = true, force = true })
+  local success = M.encrypt(filename_path, { strategy = strategy, in_place = true, force = true })
 
   if not success then
     print("Encryption failed!")
@@ -88,8 +88,17 @@ function M.setup(opts)
   end
 end
 
+local function validate_suffix(path, suffix, force)
+  if path:ends_with(suffix) and not force then
+    print("path '" .. path "' is already encrypted, no operation will be applied")
+    return false
+  end
+
+  return true
+end
+
 --- @class EncryptionOptions
---- @field strategy string encryption algorithm to use (or default if `nil``)
+--- @field strategy any Encryption algorithm to use (or default if `nil``)
 --- @field in_place boolean Persists changes in same file instead of new one with given suffix
 --- @field force boolean Forces file to be encrypted even if it already has the encryption suffix
 
@@ -98,11 +107,22 @@ end
 --- @param opts EncryptionOptions Options to be passed for encryption
 --- @return boolean result Representing whether the operation was a success or not
 function M.encrypt(path, opts)
-  return STRATEGIES.cpt.encrypt(path, opts)
+  local file_extension = path:get_file_extension()
+
+  local strategy = opts.strategy or STRATEGIES[file_extension]
+  if not strategy then
+    print('cannot find a strategy for this extension "' .. file_extension '"')
+  end
+
+  if not validate_suffix(path, file_extension, opts.force) then
+    return false
+  end
+
+  return strategy.encrypt(path, opts)
 end
 
 --- @class DecryptionOptions
---- @field strategy string encryption algorithm to use (or autodetect if `nil``)
+--- @field strategy any Encryption algorithm to use (or autodetect if `nil``)
 --- @field persist_changes boolean Persists changes to disk when true
 
 --- Decrypts the current file path using the selected cryptographic algorithm.
@@ -110,8 +130,14 @@ end
 --- @param opts DecryptionOptions Options to be passed for decryption
 --- @return table, boolean Table with the result of the job and boolean representing whether the operation was a success or not
 function M.decrypt(path, opts)
-  -- TODO - try to detect encryption used based on metadta/extension - moliva - 2024/02/16
-  return STRATEGIES.cpt.decrypt(path, opts)
+  local file_extension = path:get_file_extension()
+
+  local strategy = opts.strategy or STRATEGIES[file_extension]
+  if not strategy then
+    print('cannot find a strategy for this extension "' .. file_extension '"')
+  end
+
+  return strategy.decrypt(path, opts)
 end
 
 return M
