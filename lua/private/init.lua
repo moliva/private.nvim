@@ -18,9 +18,10 @@ local M = {}
 --- @field persist_changes boolean Persists changes to disk when true
 
 --- @class private.EncryptionOptions
---- @field strategy any Encryption algorithm to use (or default if `nil``)
+--- @field strategy? private.EncryptionModule Encryption algorithm to use (or default if `nil``)
 --- @field in_place boolean Persists changes in same file instead of new one with given suffix
 --- @field force boolean Forces file to be encrypted even if it already has the encryption suffix
+--- @field cached boolean Use cached value for encrypting if there's one
 
 local function tbl_contains_value(table, value)
   for _, v in pairs(table) do

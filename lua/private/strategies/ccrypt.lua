@@ -7,8 +7,9 @@ local ENCRYPTION_SUFFIX = ".cpt"
 --- Encrypts the current file path using the selected cryptographic algorithm.
 --- @param path string Path for the file to be encrypted
 --- @param suffix string Suffix to be used for the resulting encrypted file (e.g. ".cpt")
+--- @param cached boolean Whether to use cached password for encryption
 --- @return table, boolean result Table with the result of the job and boolean representing whether the operation was a success or not
-local function encrypt(path, suffix)
+local function encrypt(path, suffix, cached)
   local cwd = vim.fn.getcwd()
 
   local path_unsuffixed
@@ -17,11 +18,13 @@ local function encrypt(path, suffix)
   elseif suffix == ENCRYPTION_SUFFIX then
     path_unsuffixed = path
   end
+
   if path:sub(1, 1) ~= "/" then
+    --- absolute path
     path_unsuffixed = cwd .. "/" .. path_unsuffixed
   end
 
-  local result, success = with_password(path_unsuffixed, function(password)
+  local result, success = with_password(path_unsuffixed, cached, function(password)
     local result, code = Job:new({
       command = "ccrypt",
       args = { "-e", "-S", suffix, "-K", password, path },
@@ -49,7 +52,7 @@ local M = {
       suffix = ""
     end
 
-    local _, result = encrypt(path, suffix)
+    local _, result = encrypt(path, suffix, opts.cached)
 
     return result
   end,
@@ -68,7 +71,7 @@ local M = {
       path_unsuffixed = cwd .. "/" .. path_unsuffixed
     end
 
-    local result, success = with_password(path_unsuffixed, function(password)
+    local result, success = with_password(path_unsuffixed, true, function(password)
       local args = { "-d", "-K", password, path }
       if not persist_changes then
         -- if changes should not be persisted, add the cat parameter after the decrypt one (i.e. '-d')

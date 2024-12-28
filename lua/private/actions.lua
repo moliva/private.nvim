@@ -1,5 +1,7 @@
 local M = {}
 
+---@param action_desc string
+---@param get_path function () => string
 local function with_file_path(action_desc, action, get_path)
   local path = get_path()
   if path == "" then

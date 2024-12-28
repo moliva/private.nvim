@@ -15,6 +15,7 @@ M.DEFAULT_ENCRYPTION_OPTS = {
   strategy = M.DEFAULT_SETUP_OPTS.encryption_strategy,
   in_place = false,
   force = false,
+  cached = false,
 }
 
 --- @type private.DecryptionOptions
@@ -69,7 +70,7 @@ function M.write_hook()
   local file_extension = s.get_file_extension(filename_path)
   local strategy = STRATEGIES[file_extension]
 
-  local success = M.encrypt(filename_path, { strategy = strategy, in_place = true, force = true })
+  local success = M.encrypt(filename_path, { strategy = strategy, in_place = true, force = true, cached = true })
 
   if not success then
     print("Encryption failed!")
