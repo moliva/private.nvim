@@ -5,7 +5,7 @@ local STRATEGIES = require("private.strategies").strategies
 local M = {}
 
 --- @class private.EncryptionModule
---- @field encrypt function
+--- @field encrypt function returning boolean success, string? path
 --- @field decrypt function
 --- @field file_extension string
 

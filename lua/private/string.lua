@@ -15,4 +15,8 @@ function M.get_file_extension(s)
   return s:match("[^.]+$")
 end
 
+function M.get_filename(path)
+  return path:match("[^/]*$")
+end
+
 return M

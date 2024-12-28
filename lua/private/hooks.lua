@@ -82,7 +82,7 @@ end
 --- Encrypts the current file path using the selected cryptographic algorithm.
 --- @param path string Path for the file to be encrypted
 --- @param opts private.EncryptionOptions|nil Options to be passed for encryption
---- @return boolean result Representing whether the operation was a success or not
+--- @return boolean result, string? path Representing whether the operation was a success or not
 function M.encrypt(path, opts)
   opts = opts or {}
   opts = vim.tbl_extend("force", M.DEFAULT_ENCRYPTION_OPTS, opts)

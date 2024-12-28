@@ -44,7 +44,7 @@ local M = {
   --- Encrypts the current file path using the selected cryptographic algorithm.
   --- @param path string Path for the file to be encrypted
   --- @param opts private.EncryptionOptions Options to be passed for encryption
-  --- @return boolean result Representing whether the operation was a success or not
+  --- @return boolean result, string? path Representing whether the operation was a success or not
   encrypt = function(path, opts)
     local suffix = ENCRYPTION_SUFFIX
 
@@ -54,7 +54,7 @@ local M = {
 
     local _, result = encrypt(path, suffix, opts.cached)
 
-    return result
+    return result, path .. suffix
   end,
 
   --- Decrypts the current file path using the selected cryptographic algorithm.
