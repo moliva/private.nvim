@@ -11,7 +11,7 @@ A simple plugin for encrypting/decrypting files from your favorite editor, origi
 ## Requirements
 
 - Plenary
-- The encryption tool of your liking (currently supported 'ccrypt' and 'base64') installed in your machine
+- The encryption tool of your liking (currently supported `ccrypt` and `base64`) installed in your machine
 
 ## Installation
 
