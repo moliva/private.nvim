@@ -1,24 +1,23 @@
-require("private.string") -- loads the string:ends_with and string:get_file_extension functions
 local hooks = require("private.hooks")
 
 local STRATEGIES = require("private.strategies").strategies
 
 local M = {}
 
---- @class EncryptionModule
+--- @class private.EncryptionModule
 --- @field encrypt function
 --- @field decrypt function
 --- @field file_extension string
 
---- @class SetupOptions
---- @field encryption_strategy EncryptionModule
+--- @class private.SetupOptions
+--- @field encryption_strategy private.EncryptionModule
 --- @field setup_bindings boolean Defaults to `true`
 
---- @class DecryptionOptions
---- @field strategy EncryptionModule Encryption algorithm to use (or autodetect if `nil``)
+--- @class private.DecryptionOptions
+--- @field strategy? private.EncryptionModule Encryption algorithm to use (or autodetect if `nil``)
 --- @field persist_changes boolean Persists changes to disk when true
 
---- @class EncryptionOptions
+--- @class private.EncryptionOptions
 --- @field strategy any Encryption algorithm to use (or default if `nil``)
 --- @field in_place boolean Persists changes in same file instead of new one with given suffix
 --- @field force boolean Forces file to be encrypted even if it already has the encryption suffix
@@ -33,7 +32,7 @@ local function tbl_contains_value(table, value)
 end
 
 --- Sets up the current plugin with the given opts.
---- @param opts SetupOptions
+--- @param opts private.SetupOptions
 function M.setup(opts)
   opts = opts or {}
   opts = vim.tbl_extend("force", hooks.DEFAULT_SETUP_OPTS, opts)

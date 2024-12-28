@@ -1,7 +1,6 @@
-local Job = require('plenary.job')
+local Job = require("plenary.job")
 
-require('private.string') -- loads the string:ends_with and string:get_file_extension functions
-local with_password = require('private.cache').with_password
+local with_password = require("private.cache").with_password
 
 local ENCRYPTION_SUFFIX = ".cpt"
 
@@ -14,7 +13,7 @@ local function encrypt(path, suffix)
 
   local path_unsuffixed
   if suffix == "" then
-    path_unsuffixed = path:sub(1, - #ENCRYPTION_SUFFIX - 1)
+    path_unsuffixed = path:sub(1, -#ENCRYPTION_SUFFIX - 1)
   elseif suffix == ENCRYPTION_SUFFIX then
     path_unsuffixed = path
   end
@@ -24,8 +23,8 @@ local function encrypt(path, suffix)
 
   local result, success = with_password(path_unsuffixed, function(password)
     local result, code = Job:new({
-      command = 'ccrypt',
-      args = { '-e', '-S', suffix, '-K', password, path },
+      command = "ccrypt",
+      args = { "-e", "-S", suffix, "-K", password, path },
       cwd = cwd,
     }):sync()
 
@@ -35,13 +34,13 @@ local function encrypt(path, suffix)
   return result, success
 end
 
---- @type EncryptionModule
+--- @type private.EncryptionModule
 local M = {
-  file_extension = 'cpt',
+  file_extension = "cpt",
 
   --- Encrypts the current file path using the selected cryptographic algorithm.
   --- @param path string Path for the file to be encrypted
-  --- @param opts EncryptionOptions Options to be passed for encryption
+  --- @param opts private.EncryptionOptions Options to be passed for encryption
   --- @return boolean result Representing whether the operation was a success or not
   encrypt = function(path, opts)
     local suffix = ENCRYPTION_SUFFIX
@@ -57,27 +56,27 @@ local M = {
 
   --- Decrypts the current file path using the selected cryptographic algorithm.
   --- @param path string Path for the file to be decrypted
-  --- @param opts DecryptionOptions Options to be passed for decryption
-  --- @return table, boolean Table with the result of the job and boolean representing whether the operation was a success or not
+  --- @param opts private.DecryptionOptions Options to be passed for decryption
+  --- @return string[], boolean Table with the result of the job and boolean representing whether the operation was a success or not
   decrypt = function(path, opts)
     local persist_changes = opts.persist_changes or false
 
     local cwd = vim.fn.getcwd()
 
-    local path_unsuffixed = path:sub(1, - #ENCRYPTION_SUFFIX - 1)
+    local path_unsuffixed = path:sub(1, -#ENCRYPTION_SUFFIX - 1)
     if path:sub(1, 1) ~= "/" then
       path_unsuffixed = cwd .. "/" .. path_unsuffixed
     end
 
     local result, success = with_password(path_unsuffixed, function(password)
-      local args = { '-d', '-K', password, path }
+      local args = { "-d", "-K", password, path }
       if not persist_changes then
         -- if changes should not be persisted, add the cat parameter after the decrypt one (i.e. '-d')
-        table.insert(args, 2, '-c')
+        table.insert(args, 2, "-c")
       end
 
       local result, code = Job:new({
-        command = 'ccrypt',
+        command = "ccrypt",
         args = args,
         cwd = cwd,
       }):sync()
