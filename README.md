@@ -38,7 +38,7 @@ return {
 Default setup opts.
 ```lua
 {
-  encryption_strategy = require('private.strategies.ccypt'), -- use ccrypt as default
+  encryption_strategy = require('private.strategies.ccrypt'), -- use ccrypt as default
   setup_bindings = true, -- sets up autocommands for all known modules to be decrypted on open and encrypted on save
 }
 ```
