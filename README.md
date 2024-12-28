@@ -21,7 +21,7 @@ A simple plugin for encrypting/decrypting files from your favorite editor, origi
 return {
     "moliva/private.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
-    lazy = false,
+    event = { "BufReadPost", "BufWritePost" },
     config = function()
       require("private").setup()
     end,
