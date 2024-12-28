@@ -20,7 +20,9 @@ end
 --- @param get_path function function(): string Function that retrieves path for the file to encrypt
 --- @return boolean result Representing whether the operation was a success or not
 function M.encrypt(get_path)
-  return with_file_path("encrypting", function(path) return require('private').encrypt(path) end, get_path)
+  return with_file_path("encrypting", function(path)
+    return require("private.hooks").encrypt(path)
+  end, get_path)
 end
 
 --- Triggers the decryption with the corresponding encryption algorithm for a given path strategy.
@@ -28,7 +30,7 @@ end
 --- @return boolean result Representing whether the operation was a success or not
 function M.decrypt(get_path)
   return with_file_path("decrypting", function(path)
-    local _, result = require('private').decrypt(path, { persist_changes = true })
+    local _, result = require("private.hooks").decrypt(path, { persist_changes = true })
     return result
   end, get_path)
 end
